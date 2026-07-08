@@ -1,4 +1,4 @@
-﻿import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter } from 'react-router-dom'
 import ProtectedRoute from './ProtectedRoute'
 import { ROLES } from '../utils/constants'
 import PlaceholderPage from '../components/common/PlaceholderPage'
@@ -45,6 +45,11 @@ import StudentDashboard from '../pages/student/StudentDashboard'
 import CourseCatalog from '../pages/student/CourseCatalog'
 import StudentCourseDetail from '../pages/student/CourseDetail'
 
+const placeholderDescription = 'Screen ready in navigation. Backend data can be connected here.'
+const placeholder = (title) => (
+  <PlaceholderPage title={title} description={placeholderDescription} />
+)
+
 const router = createBrowserRouter([
   {
     element: <AuthLayout />,
@@ -63,14 +68,14 @@ const router = createBrowserRouter([
         element: <AdminLayout />,
         children: [
           { path: '/admin/dashboard', element: <AdminDashboard /> },
-          { path: '/admin/coaches', element: <PlaceholderPage title="Coaches" description="This frontend screen is wired into navigation and ready for the backend-backed module." /> },
-          { path: '/admin/students', element: <PlaceholderPage title="Students" description="This frontend screen is wired into navigation and ready for the backend-backed module." /> },
-          { path: '/admin/courses', element: <PlaceholderPage title="Courses" description="This frontend screen is wired into navigation and ready for the backend-backed module." /> },
+          { path: '/admin/coaches', element: placeholder('Coaches') },
+          { path: '/admin/students', element: placeholder('Students') },
+          { path: '/admin/courses', element: placeholder('Courses') },
           { path: '/admin/courses/:id', element: <AdminCourseDetail /> },
-          { path: '/admin/payments', element: <PlaceholderPage title="Payments" description="This frontend screen is wired into navigation and ready for the backend-backed module." /> },
-          { path: '/admin/subscriptions', element: <PlaceholderPage title="Subscriptions" description="This frontend screen is wired into navigation and ready for the backend-backed module." /> },
-          { path: '/admin/reports', element: <PlaceholderPage title="Reports" description="This frontend screen is wired into navigation and ready for the backend-backed module." /> },
-          { path: '/admin/settings', element: <PlaceholderPage title="Platform Settings" description="This frontend screen is wired into navigation and ready for the backend-backed module." /> },
+          { path: '/admin/payments', element: placeholder('Payments') },
+          { path: '/admin/subscriptions', element: placeholder('Subscriptions') },
+          { path: '/admin/reports', element: placeholder('Reports') },
+          { path: '/admin/settings', element: placeholder('Platform Settings') },
           { path: '/admin/profile', element: <AdminProfile /> },
         ],
       },
@@ -86,7 +91,7 @@ const router = createBrowserRouter([
           { path: '/coach/my-courses', element: <MyCourses /> },
           { path: '/coach/create-course', element: <CreateCourse /> },
           { path: '/coach/course-detail/:id', element: <CoachCourseDetail /> },
-          { path: '/coach/edit-course/:id', element: <PlaceholderPage title="Edit Course" description="This frontend screen is wired into navigation and ready for the backend-backed module." /> },
+          { path: '/coach/edit-course/:id', element: placeholder('Edit Course') },
           { path: '/coach/manage-lessons', element: <ManageLessons /> },
           { path: '/coach/create-lesson', element: <CreateLesson /> },
           { path: '/coach/manage-topics', element: <ManageTopics /> },
@@ -112,14 +117,14 @@ const router = createBrowserRouter([
           { path: '/student/dashboard', element: <StudentDashboard /> },
           { path: '/student/courses', element: <CourseCatalog /> },
           { path: '/student/courses/:id', element: <StudentCourseDetail /> },
-          { path: '/student/my-learning', element: <PlaceholderPage title="My Learning" description="This frontend screen is wired into navigation and ready for the backend-backed module." /> },
-          { path: '/student/progress', element: <PlaceholderPage title="Progress" description="This frontend screen is wired into navigation and ready for the backend-backed module." /> },
-          { path: '/student/certificates', element: <PlaceholderPage title="Certificates" description="This frontend screen is wired into navigation and ready for the backend-backed module." /> },
-          { path: '/student/profile', element: <PlaceholderPage title="Profile" description="This frontend screen is wired into navigation and ready for the backend-backed module." /> },
-          { path: '/student/settings', element: <PlaceholderPage title="Settings" description="This frontend screen is wired into navigation and ready for the backend-backed module." /> },
-          { path: '/student/checkout/:planId', element: <PlaceholderPage title="Checkout" description="This frontend screen is wired into navigation and ready for the backend-backed module." /> },
-          { path: '/student/payment/success', element: <PlaceholderPage title="Payment Success" description="This frontend screen is wired into navigation and ready for the backend-backed module." /> },
-          { path: '/student/payment/failed', element: <PlaceholderPage title="Payment Failed" description="This frontend screen is wired into navigation and ready for the backend-backed module." /> },
+          { path: '/student/my-learning', element: placeholder('My Learning') },
+          { path: '/student/progress', element: placeholder('Progress') },
+          { path: '/student/certificates', element: placeholder('Certificates') },
+          { path: '/student/profile', element: placeholder('Profile') },
+          { path: '/student/settings', element: placeholder('Settings') },
+          { path: '/student/checkout/:planId', element: placeholder('Checkout') },
+          { path: '/student/payment/success', element: placeholder('Payment Success') },
+          { path: '/student/payment/failed', element: placeholder('Payment Failed') },
         ],
       },
     ],

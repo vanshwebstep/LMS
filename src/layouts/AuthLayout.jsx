@@ -13,11 +13,6 @@ const AuthLayout = () => {
 
   return (
     <div className="auth-layout">
-      <div className="auth-bg">
-        <div className="auth-bg-orb orb-1" />
-        <div className="auth-bg-orb orb-2" />
-        <div className="auth-bg-grid" />
-      </div>
 
       <div className="auth-content">
         <Outlet />

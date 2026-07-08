@@ -8,7 +8,6 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-// Request interceptor — attach token
 api.interceptors.request.use(
   (config) => {
     const token = getToken()
@@ -18,17 +17,17 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Response interceptor — handle 401 refresh
 api.interceptors.response.use(
   (response) => response.data,
   async (error) => {
-    const original = error.config
+    const originalRequest = error.config
 
-    if (error.response?.status === 401 && !original._retry) {
-      original._retry = true
+    if (error.response?.status === 401 && !originalRequest?._retry) {
+      originalRequest._retry = true
 
       try {
         const refreshToken = getRefreshToken()
+        if (!refreshToken) throw new Error('Missing refresh token')
 
         const res = await axios.post(
           `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.REFRESH_TOKEN}`,
@@ -37,9 +36,9 @@ api.interceptors.response.use(
 
         setToken(res.data.accessToken)
 
-        original.headers.Authorization = `Bearer ${res.data.accessToken}`
+        originalRequest.headers.Authorization = `Bearer ${res.data.accessToken}`
 
-        return api(original)
+        return api(originalRequest)
       } catch {
         clearAuth()
         window.location.href = '/login'
