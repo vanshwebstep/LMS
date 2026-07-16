@@ -1,0 +1,2 @@
+import { Award } from "lucide-react";
+export default function Certificates() { return <div className="space-y-6"><div><h2 className="text-2xl font-bold text-slate-900">Certificates</h2><p className="text-sm text-slate-500 mt-1">Certificates unlock after course completion.</p></div><div className="bg-white rounded-2xl shadow-sm p-10 text-center text-slate-500"><Award className="mx-auto mb-3 text-sky-500" size={44} /><p>No certificates issued yet</p></div></div>; }

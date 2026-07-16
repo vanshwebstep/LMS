@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   Bell,
@@ -10,6 +10,8 @@ import {
   X,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import api from '../services/api'
+import { formatDateTime } from '../utils/formatters'
 
 const accentClasses = {
   admin: {
@@ -39,14 +41,52 @@ export default function DashboardShell({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [searchResults, setSearchResults] = useState(null)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [notificationOpen, setNotificationOpen] = useState(false)
+  const [notifications, setNotifications] = useState([])
+  const searchRef = useRef(null)
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const palette = accentClasses[accent] || accentClasses.admin
+  const unreadCount = notifications.filter((item) => !item.is_read).length
 
   const handleLogout = async () => {
     await logout()
     navigate('/login', { replace: true })
   }
+
+  const loadNotifications = async () => {
+    try {
+      const res = await api.get('/notifications')
+      setNotifications(res.notifications || [])
+    } catch {
+      setNotifications([])
+    }
+  }
+
+  useEffect(() => {
+    if (!searchTerm.trim()) return
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.get(`/search?q=${encodeURIComponent(searchTerm.trim())}`)
+        setSearchResults(res)
+        setSearchOpen(true)
+      } catch {
+        setSearchResults(null)
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  useEffect(() => {
+    const onClick = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) setSearchOpen(false)
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [])
 
   return (
     <div className="flex bg-[#f5f7fb] text-slate-950">
@@ -119,20 +159,85 @@ export default function DashboardShell({
               <p className="truncate text-xs font-medium text-slate-500">{subtitle}</p>
             </div>
 
-            <div className="hidden min-w-[280px] max-w-sm flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 lg:flex">
+            <div ref={searchRef} className="relative hidden min-w-[280px] max-w-sm flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 lg:flex">
               <Search size={16} />
-              <span>Search courses, users, reports...</span>
+              <input
+                value={searchTerm}
+                onChange={(event) => {
+                  setSearchTerm(event.target.value)
+                  if (!event.target.value.trim()) setSearchResults(null)
+                }}
+                onFocus={() => setSearchOpen(true)}
+                placeholder="Search courses, users, reports..."
+                className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+              />
+              {searchOpen && searchTerm && searchResults && (
+                <div className="absolute left-0 right-0 top-11 z-50 max-h-96 overflow-auto rounded-lg border border-slate-200 bg-white p-2 shadow-xl">
+                  {['courses', 'students', 'coaches', 'payments'].map((group) => (
+                    <div key={group} className="mb-2 last:mb-0">
+                      <p className="px-2 py-1 text-[11px] font-black uppercase text-slate-400">{group}</p>
+                      {(searchResults[group] || []).slice(0, 5).map((item) => (
+                        <div key={`${group}-${item.id || item.orderId}`} className="rounded-md px-2 py-2 text-xs text-slate-700 hover:bg-slate-50">
+                          <p className="font-bold">{item.title || item.name || item.orderId || item.id}</p>
+                          <p className="truncate text-slate-400">{item.email || item.category || item.status || item.description || ''}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                  {['courses', 'students', 'coaches', 'payments'].every((group) => !(searchResults[group] || []).length) && (
+                    <p className="px-3 py-4 text-center text-xs text-slate-400">No results found</p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="relative rounded-lg border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50"
-                aria-label="Notifications"
-              >
-                <Bell size={18} />
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNotificationOpen((open) => !open)
+                    if (!notificationOpen) loadNotifications()
+                  }}
+                  className="relative rounded-lg border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50"
+                  aria-label="Notifications"
+                >
+                  <Bell size={18} />
+                  {unreadCount > 0 && (
+                    <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-black leading-none text-white ring-2 ring-white">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {notificationOpen && (
+                  <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl">
+                    <div className="border-b border-slate-100 px-4 py-3">
+                      <p className="text-sm font-black text-slate-800">Notifications</p>
+                    </div>
+                    {notifications.length === 0 ? (
+                      <p className="px-4 py-5 text-center text-xs font-semibold text-slate-400">No notifications yet</p>
+                    ) : (
+                      <div className="max-h-80 overflow-auto divide-y divide-slate-100">
+                        {notifications.slice(0, 8).map((item) => (
+                          <div key={item.id} className="px-4 py-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-bold text-slate-800">{item.title}</p>
+                                <p className="mt-1 line-clamp-2 text-xs text-slate-500">{item.message}</p>
+                              </div>
+                              {!item.is_read && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-rose-500" />}
+                            </div>
+                            <p className="mt-2 text-[11px] font-semibold text-slate-400">
+                              {item.created_at ? formatDateTime(item.created_at) : ''}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               <div className="relative">
                 <button

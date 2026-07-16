@@ -21,6 +21,17 @@ import VerifyEmail from '../pages/auth/VerifyEmail'
 import AdminDashboard from '../pages/superadmin/AdminDashboard'
 import AdminCourseDetail from '../pages/superadmin/CourseDetail'
 import AdminProfile from '../pages/superadmin/AdminProfile'
+import ManageCoaches from '../pages/superadmin/ManageCoaches'
+import StudentSettings from '../pages/student/StudentSettings'
+import StudentProfile from '../pages/student/StudentProfile'
+import ManageCourses from '../pages/superadmin/ManageCourses'
+import MyProgress from '../pages/student/MyProgress'
+import ManageStudents from '../pages/superadmin/ManageStudents'
+import Reports from '../pages/superadmin/Reports'
+import Certificates from '../pages/student/Certificates'
+import MyLearning from '../pages/student/MyLearning'
+import PlatformSettings from '../pages/superadmin/PlatformSettings'
+import ManagePayments from '../pages/superadmin/ManagePayments'
 
 // Coach pages
 import CoachDashboard from '../pages/coach/CoachDashboard'
@@ -44,6 +55,7 @@ import CoachSettings from '../pages/coach/CoachSettings'
 import StudentDashboard from '../pages/student/StudentDashboard'
 import CourseCatalog from '../pages/student/CourseCatalog'
 import StudentCourseDetail from '../pages/student/CourseDetail'
+import Checkout from '../pages/student/Checkout'
 
 const placeholderDescription = 'Screen ready in navigation. Backend data can be connected here.'
 const placeholder = (title) => (
@@ -68,14 +80,14 @@ const router = createBrowserRouter([
         element: <AdminLayout />,
         children: [
           { path: '/admin/dashboard', element: <AdminDashboard /> },
-          { path: '/admin/coaches', element: placeholder('Coaches') },
-          { path: '/admin/students', element: placeholder('Students') },
-          { path: '/admin/courses', element: placeholder('Courses') },
+          { path: '/admin/coaches', element: <ManageCoaches /> },
+          { path: '/admin/students', element: <ManageStudents /> },
+          { path: '/admin/courses', element: <ManageCourses /> },
           { path: '/admin/courses/:id', element: <AdminCourseDetail /> },
-          { path: '/admin/payments', element: placeholder('Payments') },
+          { path: '/admin/payments', element: <ManagePayments /> },
           { path: '/admin/subscriptions', element: placeholder('Subscriptions') },
-          { path: '/admin/reports', element: placeholder('Reports') },
-          { path: '/admin/settings', element: placeholder('Platform Settings') },
+          { path: '/admin/reports', element: <Reports /> },
+          { path: '/admin/settings', element: <PlatformSettings /> },
           { path: '/admin/profile', element: <AdminProfile /> },
         ],
       },
@@ -117,12 +129,12 @@ const router = createBrowserRouter([
           { path: '/student/dashboard', element: <StudentDashboard /> },
           { path: '/student/courses', element: <CourseCatalog /> },
           { path: '/student/courses/:id', element: <StudentCourseDetail /> },
-          { path: '/student/my-learning', element: placeholder('My Learning') },
-          { path: '/student/progress', element: placeholder('Progress') },
-          { path: '/student/certificates', element: placeholder('Certificates') },
-          { path: '/student/profile', element: placeholder('Profile') },
-          { path: '/student/settings', element: placeholder('Settings') },
-          { path: '/student/checkout/:planId', element: placeholder('Checkout') },
+          { path: '/student/my-learning', element: <MyLearning /> },
+          { path: '/student/progress', element: <MyProgress /> },
+          { path: '/student/certificates', element: <Certificates /> },
+          { path: '/student/profile', element: <StudentProfile /> },
+          { path: '/student/settings', element: <StudentSettings /> },
+          { path: '/student/checkout/:planId', element: <Checkout /> },
           { path: '/student/payment/success', element: placeholder('Payment Success') },
           { path: '/student/payment/failed', element: placeholder('Payment Failed') },
         ],

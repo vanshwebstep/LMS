@@ -1,0 +1,10 @@
+import { useEffect, useState } from "react";
+import { Search, Users } from "lucide-react";
+import api from "../../services/api";
+
+export default function ManageStudents() {
+  const [rows, setRows] = useState([]); const [q, setQ] = useState(""); const [loading, setLoading] = useState(true);
+  useEffect(() => { api.get("/admin/students").then((r) => setRows(r.students || [])).finally(() => setLoading(false)); }, []);
+  const filtered = rows.filter((r) => `${r.name} ${r.email}`.toLowerCase().includes(q.toLowerCase()));
+  return <div className="space-y-6"><div><h2 className="text-2xl font-bold text-slate-900">Students</h2><p className="text-sm text-slate-500 mt-1">All enrolled and registered students</p></div><div className="bg-white rounded-2xl shadow-sm p-4"><div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search students..." className="w-full rounded-lg border px-9 py-2 text-sm" /></div></div><div className="bg-white rounded-2xl shadow-sm overflow-hidden"><table className="w-full text-sm"><thead className="bg-slate-50"><tr>{["Name", "Email", "Status", "Phone", "City"].map((c) => <th key={c} className="px-5 py-3 text-left text-xs font-bold uppercase text-slate-500">{c}</th>)}</tr></thead><tbody className="divide-y">{loading ? <tr><td colSpan={5} className="py-10 text-center text-slate-400">Loading...</td></tr> : filtered.length === 0 ? <tr><td colSpan={5} className="py-10 text-center text-slate-400"><Users className="mx-auto mb-2" />No students found</td></tr> : filtered.map((s) => <tr key={s.id} className="hover:bg-slate-50"><td className="px-5 py-3 font-semibold">{s.name}</td><td className="px-5 py-3">{s.email}</td><td className="px-5 py-3">{s.status}</td><td className="px-5 py-3">{s.profile?.phone || "-"}</td><td className="px-5 py-3">{s.profile?.city || "-"}</td></tr>)}</tbody></table></div></div>;
+}
