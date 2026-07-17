@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { PlusCircle, Search, Filter, BookOpen, Users, Edit2, Eye, MoreVertical } from "lucide-react";
 import api from "../../services/api";
 import { formatCurrency } from "../../utils/formatters";
+import { resolveMediaUrl } from "../../utils/media";
 
 const statuses = ["All", "published", "draft", "archived"];
 
@@ -23,7 +24,7 @@ export default function MyCourses() {
         const res = await api.get("/coach/courses");
         if (alive) setCourses(res.courses || []);
       } catch (err) {
-        if (alive) setError(err?.message || "Courses load nahi ho paaye");
+        if (alive) setError(err?.message || "Failed to load courses");
       } finally {
         if (alive) setLoading(false);
       }
@@ -83,8 +84,14 @@ export default function MyCourses() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map((course) => (
             <div key={course.id} className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-              <div className="h-36 bg-gradient-to-br from-indigo-100 to-sky-100 flex items-center justify-center text-4xl font-black text-indigo-500">
-                {(course.title || "C").slice(0, 1).toUpperCase()}
+              <div className="h-36 overflow-hidden bg-gradient-to-br from-indigo-100 to-sky-100">
+                {resolveMediaUrl(course.thumbnailUrl) ? (
+                  <img src={resolveMediaUrl(course.thumbnailUrl)} alt={course.title} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-4xl font-black text-indigo-500">
+                    {(course.title || "C").slice(0, 1).toUpperCase()}
+                  </div>
+                )}
               </div>
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2 mb-2">

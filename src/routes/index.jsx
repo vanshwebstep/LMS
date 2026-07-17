@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom'
+﻿import { createBrowserRouter } from 'react-router-dom'
 import ProtectedRoute from './ProtectedRoute'
 import { ROLES } from '../utils/constants'
 import PlaceholderPage from '../components/common/PlaceholderPage'
@@ -56,6 +56,9 @@ import StudentDashboard from '../pages/student/StudentDashboard'
 import CourseCatalog from '../pages/student/CourseCatalog'
 import StudentCourseDetail from '../pages/student/CourseDetail'
 import Checkout from '../pages/student/Checkout'
+import LearnCourse from '../pages/student/LearnCourse'
+import SubmitAssignment from '../pages/student/SubmitAssignment'
+import AttemptQuiz from '../pages/student/AttemptQuiz'
 
 const placeholderDescription = 'Screen ready in navigation. Backend data can be connected here.'
 const placeholder = (title) => (
@@ -103,7 +106,7 @@ const router = createBrowserRouter([
           { path: '/coach/my-courses', element: <MyCourses /> },
           { path: '/coach/create-course', element: <CreateCourse /> },
           { path: '/coach/course-detail/:id', element: <CoachCourseDetail /> },
-          { path: '/coach/edit-course/:id', element: placeholder('Edit Course') },
+          { path: '/coach/edit-course/:id', element: <CreateCourse /> },
           { path: '/coach/manage-lessons', element: <ManageLessons /> },
           { path: '/coach/create-lesson', element: <CreateLesson /> },
           { path: '/coach/manage-topics', element: <ManageTopics /> },
@@ -130,6 +133,9 @@ const router = createBrowserRouter([
           { path: '/student/courses', element: <CourseCatalog /> },
           { path: '/student/courses/:id', element: <StudentCourseDetail /> },
           { path: '/student/my-learning', element: <MyLearning /> },
+          { path: '/student/learn/:courseId', element: <LearnCourse /> },
+          { path: '/student/assignments/:assignmentId/submit', element: <SubmitAssignment /> },
+          { path: '/student/quizzes/:quizId/attempt', element: <AttemptQuiz /> },
           { path: '/student/progress', element: <MyProgress /> },
           { path: '/student/certificates', element: <Certificates /> },
           { path: '/student/profile', element: <StudentProfile /> },
@@ -146,4 +152,3 @@ const router = createBrowserRouter([
 ])
 
 export default router
-

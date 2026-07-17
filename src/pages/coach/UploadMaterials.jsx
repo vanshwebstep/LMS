@@ -1,189 +1,61 @@
-import { useState, useRef } from "react";
-import {
-  Upload, FileText, Trash2, Download, Search,
-  BookOpen, Filter, Eye, FolderOpen
-} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Download, FileText, FolderOpen, Search, Trash2, Upload } from "lucide-react";
+import toast from "react-hot-toast";
+import api from "../../services/api";
+import { confirmDialog } from "../../utils/dialogs";
 
-const mockMaterials = [
-  { id: 1, name: "React Cheatsheet.pdf",       course: "React Masterclass", type: "PDF",  size: "1.2 MB", uploadedOn: "20 May 2025", downloads: 34 },
-  { id: 2, name: "Hooks Reference Guide.pdf",  course: "React Masterclass", type: "PDF",  size: "840 KB", uploadedOn: "18 May 2025", downloads: 28 },
-  { id: 3, name: "Node.js Notes.pdf",          course: "Node.js Basics",    type: "PDF",  size: "2.1 MB", uploadedOn: "15 May 2025", downloads: 19 },
-  { id: 4, name: "CSS Flexbox Slides.pdf",     course: "CSS Advanced",      type: "PDF",  size: "3.4 MB", uploadedOn: "12 May 2025", downloads: 42 },
-  { id: 5, name: "Project Starter Code.zip",   course: "React Masterclass", type: "ZIP",  size: "4.8 MB", uploadedOn: "10 May 2025", downloads: 55 },
-];
-
-const courseOptions = ["All Courses","React Masterclass","Node.js Basics","CSS Advanced"];
+const formatSize = (bytes = 0) => bytes ? `${(Number(bytes) / 1024 / 1024).toFixed(1)} MB` : "-";
 
 export default function UploadMaterials() {
-  const [materials,    setMaterials]    = useState(mockMaterials);
-  const [search,       setSearch]       = useState("");
-  const [courseFilter, setCourseFilter] = useState("All Courses");
-  const [dragOver,     setDragOver]     = useState(false);
-  const [uploading,    setUploading]    = useState(false);
-  const [selCourse,    setSelCourse]    = useState(courseOptions[1]);
-  const inputRef = useRef();
+  const [materials, setMaterials] = useState([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useRef(null);
 
-  const filtered = materials.filter((m) => {
-    const matchSearch = m.name.toLowerCase().includes(search.toLowerCase());
-    const matchCourse = courseFilter === "All Courses" || m.course === courseFilter;
-    return matchSearch && matchCourse;
-  });
-
-  const handleFiles = (files) => {
-    if (!files || files.length === 0) return;
-    setUploading(true);
-    setTimeout(() => {
-      const newFiles = Array.from(files).map((f) => ({
-        id: Date.now() + Math.random(),
-        name: f.name,
-        course: selCourse,
-        type: f.name.endsWith(".zip") ? "ZIP" : "PDF",
-        size: `${(f.size / 1024 / 1024).toFixed(1)} MB`,
-        uploadedOn: new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
-        downloads: 0,
-      }));
-      setMaterials((p) => [...newFiles, ...p]);
-      setUploading(false);
-    }, 1200);
+  const load = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get("/coach/materials");
+      setMaterials(res.materials || []);
+    } catch (err) {
+      toast.error(err?.message || "Failed to load materials");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const deleteMaterial = (id) => setMaterials((p) => p.filter((m) => m.id !== id));
+  useEffect(() => { load(); }, []);
 
-  return (
-    <div className="space-y-6 max-w-4xl">
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-800">Upload Materials</h2>
-        <p className="text-sm text-gray-500 mt-1">Upload PDFs, notes and resources for your students</p>
-      </div>
+  const handleFiles = async (files) => {
+    if (!files?.length) return;
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const formData = new FormData(); formData.append("file", file); await api.post("/coach/materials", formData, { headers: { "Content-Type": "multipart/form-data" } });
+      }
+      toast.success("Material saved");
+      await load();
+    } catch (err) {
+      toast.error(err?.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
 
-      {/* Upload Zone */}
-      <div className="bg-white rounded-2xl shadow-sm p-5 space-y-4">
-        <div className="flex items-center gap-3">
-          <BookOpen size={18} className="text-indigo-500" />
-          <span className="text-sm font-medium text-gray-700">Upload for Course:</span>
-          <select
-            value={selCourse}
-            onChange={(e) => setSelCourse(e.target.value)}
-            className="border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-          >
-            {courseOptions.slice(1).map((c) => <option key={c}>{c}</option>)}
-          </select>
-        </div>
+  const remove = async (id) => {
+    const ok = await confirmDialog({ title: "Delete material?", message: "This uploaded material will be removed.", confirmText: "Delete Material", tone: "danger" });
+    if (!ok) return;
+    try {
+      await api.delete(`/coach/materials/${id}`);
+      toast.success("Material deleted");
+      load();
+    } catch (err) {
+      toast.error(err?.message || "Delete failed");
+    }
+  };
 
-        {/* Drop Zone */}
-        <div
-          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
-          onClick={() => inputRef.current?.click()}
-          className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-colors ${
-            dragOver
-              ? "border-indigo-500 bg-indigo-50"
-              : "border-gray-300 hover:border-indigo-400 hover:bg-gray-50"
-          }`}
-        >
-          <input
-            ref={inputRef}
-            type="file"
-            multiple
-            accept=".pdf,.zip,.doc,.docx,.ppt,.pptx"
-            className="hidden"
-            onChange={(e) => handleFiles(e.target.files)}
-          />
-          {uploading ? (
-            <div className="space-y-2">
-              <div className="w-10 h-10 border-4 border-indigo-300 border-t-indigo-600 rounded-full animate-spin mx-auto" />
-              <p className="text-sm text-indigo-600 font-medium">Uploading...</p>
-            </div>
-          ) : (
-            <>
-              <Upload size={36} className="mx-auto text-gray-400 mb-3" />
-              <p className="text-gray-600 font-medium">Drag & drop files here</p>
-              <p className="text-sm text-gray-400 mt-1">or click to browse — PDF, ZIP, DOC, PPT</p>
-              <span className="inline-block mt-3 bg-indigo-600 text-white text-sm px-4 py-2 rounded-xl hover:bg-indigo-700 transition">
-                Choose Files
-              </span>
-            </>
-          )}
-        </div>
-      </div>
+  const filtered = materials.filter((item) => item.name?.toLowerCase().includes(search.toLowerCase()));
 
-      {/* Filters */}
-      <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-wrap gap-3 items-center">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text" placeholder="Search materials..."
-            value={search} onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <Filter size={16} className="text-gray-400" />
-          <select value={courseFilter} onChange={(e) => setCourseFilter(e.target.value)}
-            className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
-            {courseOptions.map((c) => <option key={c}>{c}</option>)}
-          </select>
-        </div>
-      </div>
-
-      {/* Materials List */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        {filtered.length === 0 ? (
-          <div className="text-center py-16">
-            <FolderOpen size={40} className="mx-auto text-gray-300 mb-3" />
-            <p className="text-gray-400">No materials found</p>
-          </div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                {["File","Course","Size","Uploaded","Downloads","Actions"].map((h) => (
-                  <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filtered.map((m) => (
-                <tr key={m.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className={`p-1.5 rounded-lg ${m.type === "PDF" ? "bg-red-100" : "bg-yellow-100"}`}>
-                        <FileText size={15} className={m.type === "PDF" ? "text-red-500" : "text-yellow-600"} />
-                      </div>
-                      <span className="font-medium text-gray-800 text-xs">{m.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3">
-                    <span className="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded-full">{m.course}</span>
-                  </td>
-                  <td className="px-5 py-3 text-gray-500 text-xs">{m.size}</td>
-                  <td className="px-5 py-3 text-gray-500 text-xs">{m.uploadedOn}</td>
-                  <td className="px-5 py-3">
-                    <span className="flex items-center gap-1 text-xs text-gray-600">
-                      <Download size={12} /> {m.downloads}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3">
-                    <div className="flex gap-1">
-                      <button className="p-1.5 hover:bg-indigo-50 rounded-lg" title="Preview">
-                        <Eye size={14} className="text-indigo-400" />
-                      </button>
-                      <button className="p-1.5 hover:bg-green-50 rounded-lg" title="Download">
-                        <Download size={14} className="text-green-500" />
-                      </button>
-                      <button onClick={() => deleteMaterial(m.id)} className="p-1.5 hover:bg-red-50 rounded-lg" title="Delete">
-                        <Trash2 size={14} className="text-red-400" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </div>
-  );
+  return <div className="space-y-6"><div><h2 className="text-2xl font-bold text-gray-800">Upload Materials</h2><p className="mt-1 text-sm text-gray-500">Files are uploaded to the backend local uploads folder. Replace storage with S3/Cloudinary later if needed.</p></div><div className="rounded-2xl bg-white p-5 shadow-sm"><div onClick={() => inputRef.current?.click()} className="cursor-pointer rounded-2xl border-2 border-dashed border-gray-300 p-10 text-center hover:border-indigo-400 hover:bg-gray-50"><input ref={inputRef} type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} /><Upload size={36} className="mx-auto mb-3 text-gray-400" /><p className="font-medium text-gray-600">{uploading ? "Saving..." : "Click to choose files"}</p><p className="mt-1 text-sm text-gray-400">PDF, ZIP, DOC, PPT, image, video</p></div></div><div className="rounded-2xl bg-white p-4 shadow-sm"><div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search materials..." className="w-full rounded-lg border py-2 pl-9 pr-3 text-sm" /></div></div><div className="overflow-hidden rounded-2xl bg-white shadow-sm">{loading ? <div className="p-10 text-center text-gray-400">Loading...</div> : filtered.length === 0 ? <div className="p-16 text-center text-gray-400"><FolderOpen size={40} className="mx-auto mb-3 opacity-40" />No materials found</div> : <table className="w-full text-sm"><thead className="bg-gray-50 text-left text-xs font-bold uppercase text-gray-500"><tr><th className="px-5 py-3">File</th><th className="px-5 py-3">Type</th><th className="px-5 py-3">Size</th><th className="px-5 py-3">Uploaded</th><th className="px-5 py-3">Actions</th></tr></thead><tbody className="divide-y divide-gray-100">{filtered.map((item) => <tr key={item.id} className="hover:bg-gray-50"><td className="px-5 py-3"><div className="flex items-center gap-2"><FileText size={15} className="text-indigo-500" /><span className="font-medium text-gray-800">{item.name}</span></div></td><td className="px-5 py-3 text-gray-600">{item.type}</td><td className="px-5 py-3 text-gray-600">{formatSize(item.sizeBytes)}</td><td className="px-5 py-3 text-gray-600">{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "-"}</td><td className="px-5 py-3"><div className="flex gap-1"><a href={item.url || "#"} className="rounded-lg p-1.5 hover:bg-green-50" title="Download"><Download size={14} className="text-green-600" /></a><button onClick={() => remove(item.id)} className="rounded-lg p-1.5 hover:bg-red-50"><Trash2 size={14} className="text-red-500" /></button></div></td></tr>)}</tbody></table>}</div></div>;
 }

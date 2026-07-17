@@ -1,199 +1,76 @@
-import { useState } from "react";
-import { Plus, Edit2, Trash2, GripVertical, Tag, BookOpen, Save, X } from "lucide-react";
-
-const courseOptions = ["React Masterclass", "Node.js Basics", "CSS Advanced"];
-
-const initialTopics = [
-  { id: 1, name: "JSX Fundamentals",       section: "Core Concepts",  order: 1, lessons: 4 },
-  { id: 2, name: "Props & State",           section: "Core Concepts",  order: 2, lessons: 6 },
-  { id: 3, name: "useEffect Hook",          section: "Hooks",          order: 1, lessons: 3 },
-  { id: 4, name: "useState Hook",           section: "Hooks",          order: 2, lessons: 3 },
-  { id: 5, name: "React Router",            section: "Advanced",       order: 1, lessons: 5 },
-  { id: 6, name: "Context API",             section: "Advanced",       order: 2, lessons: 4 },
-  { id: 7, name: "Environment Setup",       section: "Getting Started",order: 1, lessons: 2 },
-];
+import { useEffect, useMemo, useState } from "react";
+import { Edit2, Plus, Save, Tag, Trash2, X } from "lucide-react";
+import toast from "react-hot-toast";
+import api from "../../services/api";
+import { confirmDialog } from "../../utils/dialogs";
 
 export default function ManageTopics() {
-  const [selectedCourse, setSelectedCourse] = useState(courseOptions[0]);
-  const [topics,         setTopics]         = useState(initialTopics);
-  const [editingId,      setEditingId]      = useState(null);
-  const [editName,       setEditName]       = useState("");
-  const [showAddModal,   setShowAddModal]   = useState(false);
+  const [courses, setCourses] = useState([]);
+  const [lessons, setLessons] = useState([]);
+  const [topics, setTopics] = useState([]);
+  const [selectedCourse, setSelectedCourse] = useState("All");
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Group by section
-  const sections = [...new Set(topics.map((t) => t.section))];
-  const grouped  = sections.reduce((acc, sec) => {
-    acc[sec] = topics.filter((t) => t.section === sec).sort((a, b) => a.order - b.order);
-    return acc;
-  }, {});
-
-  const startEdit = (topic) => { setEditingId(topic.id); setEditName(topic.name); };
-  const saveEdit  = (id) => {
-    if (editName.trim()) setTopics((p) => p.map((t) => t.id === id ? { ...t, name: editName } : t));
-    setEditingId(null);
+  const load = async () => {
+    try {
+      setLoading(true);
+      const [courseRes, lessonRes, topicRes] = await Promise.all([api.get("/coach/courses"), api.get("/coach/lessons"), api.get("/coach/topics")]);
+      setCourses(courseRes.courses || []);
+      setLessons(lessonRes.lessons || []);
+      setTopics(topicRes.topics || []);
+    } catch (err) {
+      toast.error(err?.message || "Failed to load topics");
+    } finally {
+      setLoading(false);
+    }
   };
-  const deleteTopic = (id) => setTopics((p) => p.filter((t) => t.id !== id));
 
-  const addTopic = ({ name, section }) => {
-    setTopics((p) => [
-      ...p,
-      { id: Date.now(), name, section, order: p.filter((t) => t.section === section).length + 1, lessons: 0 },
-    ]);
-    setShowAddModal(false);
+  useEffect(() => { load(); }, []);
+
+  const filteredLessons = useMemo(() => selectedCourse === "All" ? lessons : lessons.filter((lesson) => lesson.courseId === selectedCourse), [lessons, selectedCourse]);
+  const filteredTopics = useMemo(() => selectedCourse === "All" ? topics : topics.filter((topic) => topic.course?.id === selectedCourse), [topics, selectedCourse]);
+
+  const remove = async (id) => {
+    const ok = await confirmDialog({ title: "Delete topic?", message: "This topic will be removed from the lesson.", confirmText: "Delete Topic", tone: "danger" });
+    if (!ok) return;
+    try {
+      await api.delete(`/coach/topics/${id}`);
+      toast.success("Topic deleted");
+      load();
+    } catch (err) {
+      toast.error(err?.message || "Delete failed");
+    }
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800">Manage Topics</h2>
-          <p className="text-sm text-gray-500 mt-1">{topics.length} topics across {sections.length} sections</p>
-        </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-indigo-700 transition"
-        >
-          <Plus size={18} /> Add Topic
-        </button>
-      </div>
-
-      {/* Course Selector */}
-      <div className="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3">
-        <BookOpen size={18} className="text-indigo-500" />
-        <span className="text-sm font-medium text-gray-700">Course:</span>
-        <select
-          value={selectedCourse}
-          onChange={(e) => setSelectedCourse(e.target.value)}
-          className="border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-        >
-          {courseOptions.map((c) => <option key={c}>{c}</option>)}
-        </select>
-      </div>
-
-      {/* Grouped Topics */}
-      <div className="space-y-5">
-        {Object.entries(grouped).map(([section, sTopics]) => (
-          <div key={section} className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            {/* Section Header */}
-            <div className="flex items-center gap-2 px-5 py-3 bg-indigo-50 border-b">
-              <Tag size={15} className="text-indigo-500" />
-              <h3 className="font-semibold text-indigo-700 text-sm">{section}</h3>
-              <span className="ml-auto text-xs text-indigo-400">{sTopics.length} topics</span>
-            </div>
-
-            {/* Topics */}
-            <div className="divide-y divide-gray-50">
-              {sTopics.map((topic) => (
-                <div key={topic.id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition-colors">
-                  <GripVertical size={16} className="text-gray-300 cursor-grab flex-shrink-0" />
-
-                  {editingId === topic.id ? (
-                    <div className="flex-1 flex items-center gap-2">
-                      <input
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && saveEdit(topic.id)}
-                        autoFocus
-                        className="flex-1 border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                      />
-                      <button onClick={() => saveEdit(topic.id)} className="p-1.5 bg-green-100 rounded-lg hover:bg-green-200">
-                        <Save size={14} className="text-green-600" />
-                      </button>
-                      <button onClick={() => setEditingId(null)} className="p-1.5 bg-gray-100 rounded-lg hover:bg-gray-200">
-                        <X size={14} className="text-gray-500" />
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <span className="flex-1 text-sm text-gray-700 font-medium">{topic.name}</span>
-                      <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-                        {topic.lessons} lessons
-                      </span>
-                      <div className="flex gap-1">
-                        <button onClick={() => startEdit(topic)} className="p-1.5 hover:bg-indigo-50 rounded-lg">
-                          <Edit2 size={14} className="text-indigo-400" />
-                        </button>
-                        <button onClick={() => deleteTopic(topic.id)} className="p-1.5 hover:bg-red-50 rounded-lg">
-                          <Trash2 size={14} className="text-red-400" />
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Add Topic Modal */}
-      {showAddModal && (
-        <AddTopicModal
-          sections={sections}
-          onSave={addTopic}
-          onClose={() => setShowAddModal(false)}
-        />
-      )}
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4"><div><h2 className="text-2xl font-bold text-gray-800">Manage Topics</h2><p className="mt-1 text-sm text-gray-500">{loading ? "Loading topics..." : `${filteredTopics.length} topic(s) found`}</p></div><button onClick={() => { setEditing(null); setShowModal(true); }} className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700"><Plus size={18} /> Add Topic</button></div>
+      <div className="rounded-2xl bg-white p-4 shadow-sm"><select value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)} className="rounded-lg border px-3 py-2 text-sm"><option value="All">All Courses</option>{courses.map((course) => <option key={course.id} value={course.id}>{course.title}</option>)}</select></div>
+      <div className="overflow-hidden rounded-2xl bg-white shadow-sm"><table className="w-full text-sm"><thead className="bg-gray-50 text-left text-xs font-bold uppercase text-gray-500"><tr><th className="px-5 py-3">Topic</th><th className="px-5 py-3">Lesson</th><th className="px-5 py-3">Course</th><th className="px-5 py-3">Order</th><th className="px-5 py-3">Actions</th></tr></thead><tbody className="divide-y divide-gray-100">{loading ? <tr><td colSpan={5} className="py-10 text-center text-gray-400">Loading...</td></tr> : filteredTopics.length === 0 ? <tr><td colSpan={5} className="py-10 text-center text-gray-400">No topics found</td></tr> : filteredTopics.map((topic) => <tr key={topic.id} className="hover:bg-gray-50"><td className="px-5 py-3"><div className="flex items-center gap-2"><Tag size={15} className="text-indigo-500" /><span className="font-semibold text-gray-800">{topic.title}</span></div></td><td className="px-5 py-3 text-gray-600">{topic.lesson?.title || "-"}</td><td className="px-5 py-3 text-gray-600">{topic.course?.title || "-"}</td><td className="px-5 py-3 text-gray-600">{topic.sortOrder || 0}</td><td className="px-5 py-3"><div className="flex gap-1"><button onClick={() => { setEditing(topic); setShowModal(true); }} className="rounded-lg p-1.5 hover:bg-indigo-50"><Edit2 size={14} className="text-indigo-500" /></button><button onClick={() => remove(topic.id)} className="rounded-lg p-1.5 hover:bg-red-50"><Trash2 size={14} className="text-red-500" /></button></div></td></tr>)}</tbody></table></div>
+      {showModal && <TopicModal lessons={filteredLessons.length ? filteredLessons : lessons} topic={editing} onClose={() => setShowModal(false)} onSaved={() => { setShowModal(false); load(); }} />}
     </div>
   );
 }
 
-/* ─── Add Topic Modal ─────────────────────────── */
-function AddTopicModal({ sections, onSave, onClose }) {
-  const [form, setForm] = useState({ name: "", section: sections[0] || "", newSection: "" });
-  const [useNew, setUseNew] = useState(false);
-  const change = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
-
-  const handleSave = () => {
-    const section = useNew ? form.newSection.trim() : form.section;
-    if (!form.name.trim() || !section) return;
-    onSave({ name: form.name.trim(), section });
+function TopicModal({ lessons, topic, onClose, onSaved }) {
+  const [form, setForm] = useState(() => topic ? { lessonId: topic.lessonId, title: topic.title, body: topic.body || "", sortOrder: String(topic.sortOrder || 0) } : { lessonId: lessons[0]?.id || "", title: "", body: "", sortOrder: "0" });
+  const [saving, setSaving] = useState(false);
+  const change = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const submit = async () => {
+    if (!form.lessonId || !form.title.trim()) return toast.error("Lesson and topic title required");
+    setSaving(true);
+    try {
+      const payload = { ...form, sortOrder: Number(form.sortOrder || 0) };
+      if (topic) await api.put(`/coach/topics/${topic.id}`, payload); else await api.post("/coach/topics", payload);
+      toast.success(topic ? "Topic updated" : "Topic created");
+      onSaved();
+    } catch (err) {
+      toast.error(err?.message || "Topic save failed");
+    } finally {
+      setSaving(false);
+    }
   };
-
-  return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-        <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h3 className="font-semibold text-gray-800">Add Topic</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
-        </div>
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Topic Name</label>
-            <input name="name" value={form.name} onChange={change} placeholder="e.g. useState Hook"
-              className="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-sm font-medium text-gray-700">Section</label>
-              <button
-                onClick={() => setUseNew((p) => !p)}
-                className="text-xs text-indigo-600 hover:underline"
-              >
-                {useNew ? "Use existing" : "+ New section"}
-              </button>
-            </div>
-            {useNew ? (
-              <input name="newSection" value={form.newSection} onChange={change}
-                placeholder="New section name"
-                className="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-            ) : (
-              <select name="section" value={form.section} onChange={change}
-                className="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
-                {sections.map((s) => <option key={s}>{s}</option>)}
-              </select>
-            )}
-          </div>
-        </div>
-        <div className="flex gap-3 px-6 pb-5">
-          <button onClick={onClose} className="flex-1 border rounded-xl py-2.5 text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
-          <button onClick={handleSave} className="flex-1 bg-indigo-600 text-white rounded-xl py-2.5 text-sm font-medium hover:bg-indigo-700">
-            Add Topic
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div className="w-full max-w-lg rounded-2xl bg-white shadow-xl"><div className="flex items-center justify-between border-b px-6 py-4"><h3 className="font-semibold text-gray-800">{topic ? "Edit Topic" : "Add Topic"}</h3><button onClick={onClose}><X size={18} /></button></div><div className="space-y-4 p-6"><select name="lessonId" value={form.lessonId} onChange={change} className="w-full rounded-lg border px-3 py-2.5 text-sm"><option value="">Select lesson</option>{lessons.map((lesson) => <option key={lesson.id} value={lesson.id}>{lesson.course?.title ? `${lesson.course.title} - ` : ""}{lesson.title}</option>)}</select><input name="title" value={form.title} onChange={change} placeholder="Topic title" className="w-full rounded-lg border px-3 py-2.5 text-sm" /><textarea name="body" value={form.body} onChange={change} rows={4} placeholder="Topic content" className="w-full resize-none rounded-lg border px-3 py-2.5 text-sm" /><input name="sortOrder" type="number" value={form.sortOrder} onChange={change} className="w-full rounded-lg border px-3 py-2.5 text-sm" /></div><div className="flex gap-3 px-6 pb-5"><button onClick={onClose} className="flex-1 rounded-xl border py-2.5 text-sm text-gray-600">Cancel</button><button onClick={submit} disabled={saving} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 text-sm font-medium text-white disabled:opacity-60"><Save size={15} /> {saving ? "Saving..." : "Save"}</button></div></div></div>;
 }

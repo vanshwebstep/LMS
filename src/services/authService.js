@@ -1,43 +1,13 @@
-﻿import API_CONFIG from '../config/api.config'
-import { ROLES } from '../utils/constants'
+import API_CONFIG from '../config/api.config'
 import { getRefreshToken } from '../utils/storage'
 import api from './api'
 
-const PASSWORD = 'password123'
-
-export const DEMO_ACCOUNTS = [
-  {
-    id: 'admin-demo',
-    name: 'Aarav Admin',
-    email: 'admin@learnflow.local',
-    password: PASSWORD,
-    role: ROLES.SUPER_ADMIN,
-    title: 'Platform Admin',
-  },
-  {
-    id: 'coach-demo',
-    name: 'Meera Coach',
-    email: 'coach@learnflow.local',
-    password: PASSWORD,
-    role: ROLES.COACH,
-    title: 'Course Coach',
-  },
-  {
-    id: 'student-demo',
-    name: 'Rohan Student',
-    email: 'student@learnflow.local',
-    password: PASSWORD,
-    role: ROLES.STUDENT,
-    title: 'Learner',
-  },
-]
 
 const authService = {
-  getDemoAccounts: () => DEMO_ACCOUNTS.map(({ id, name, email, role, title }) => ({ id, name, email, role, title })),
 
   login: (credentials) => api.post(API_CONFIG.ENDPOINTS.AUTH.LOGIN, credentials),
 
-  register: (data) => api.post(API_CONFIG.ENDPOINTS.AUTH.REGISTER, data),
+  register: (data) => api.post(API_CONFIG.ENDPOINTS.AUTH.REGISTER, data, data instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined),
 
   logout: () =>
     api.post(API_CONFIG.ENDPOINTS.AUTH.LOGOUT, {

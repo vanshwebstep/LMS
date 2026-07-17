@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DollarSign, TrendingUp, Users, Download, ArrowUpRight, ArrowDownRight, Filter } from "lucide-react";
 import api from "../../services/api";
 import { formatCurrency, formatDate } from "../../utils/formatters";
@@ -11,7 +11,7 @@ export default function CoachEarnings() {
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
-  useEffect(() => { let alive = true; const load = async () => { try { setLoading(true); const res = await api.get("/coach/earnings"); if (alive) setEarnings(res.earnings || DEFAULT_EARNINGS); } catch (err) { if (alive) setError(err?.message || "Earnings load nahi ho paayi"); } finally { if (alive) setLoading(false); } }; load(); return () => { alive = false; }; }, []);
+  useEffect(() => { let alive = true; const load = async () => { try { setLoading(true); const res = await api.get("/coach/earnings"); if (alive) setEarnings(res.earnings || DEFAULT_EARNINGS); } catch (err) { if (alive) setError(err?.message || "Failed to load earnings"); } finally { if (alive) setLoading(false); } }; load(); return () => { alive = false; }; }, []);
 
   const transactions = useMemo(() => earnings.history || [], [earnings.history]);
   const filtered = transactions.filter((t) => statusFilter === "All" || t.status === statusFilter.toLowerCase());

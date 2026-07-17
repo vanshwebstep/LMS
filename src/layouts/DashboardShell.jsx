@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   Bell,
@@ -12,6 +12,7 @@ import {
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
 import { formatDateTime } from '../utils/formatters'
+import { resolveMediaUrl } from '../utils/media'
 
 const accentClasses = {
   admin: {
@@ -245,8 +246,12 @@ export default function DashboardShell({
                   onClick={() => setDropdownOpen((open) => !open)}
                   className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 hover:bg-slate-50"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-950 text-sm font-black text-white">
-                    {user?.name?.[0]?.toUpperCase() || 'U'}
+                  <div className="h-8 w-8 overflow-hidden rounded-lg bg-slate-950 text-sm font-black text-white">
+                    {resolveMediaUrl(user?.avatar) ? (
+                      <img src={resolveMediaUrl(user.avatar)} alt={user?.name || 'User'} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">{user?.name?.[0]?.toUpperCase() || 'U'}</div>
+                    )}
                   </div>
                   <span className="hidden text-sm font-bold text-slate-700 sm:inline">
                     {user?.name || 'User'}

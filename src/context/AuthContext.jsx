@@ -1,4 +1,4 @@
-﻿/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useCallback } from 'react'
 import authService from '../services/authService'
 import {
@@ -41,6 +41,12 @@ export const AuthProvider = ({ children }) => {
     return applySession(session)
   }, [applySession])
 
+  const updateUser = useCallback((nextUser) => {
+    setUser(nextUser)
+    setUserState(nextUser)
+    return nextUser
+  }, [])
+
   const logout = useCallback(async () => {
     try {
       await authService.logout()
@@ -61,6 +67,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        updateUser,
         isRole,
         isAuthenticated,
         getRoleRedirect,

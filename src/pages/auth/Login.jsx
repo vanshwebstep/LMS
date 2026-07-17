@@ -1,18 +1,37 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, GraduationCap, Lock, Mail, ShieldCheck, Trophy } from 'lucide-react'
+import { Eye, EyeOff, GraduationCap, Lock, Mail, ShieldCheck, UserCog } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { getRoleRedirect } from '../../utils/helpers'
-import { ROLES } from '../../utils/constants'
-import { DEMO_ACCOUNTS } from '../../services/authService'
 import toast from 'react-hot-toast'
 import './auth.css'
 
-const ROLE_META = {
-  [ROLES.SUPER_ADMIN]: { label: 'Admin', Icon: ShieldCheck },
-  [ROLES.COACH]: { label: 'Coach', Icon: Trophy },
-  [ROLES.STUDENT]: { label: 'Student', Icon: GraduationCap },
-}
+const ROLE_OPTIONS = [
+  {
+    value: 'student',
+    label: 'Student',
+    title: 'Student learning portal',
+    subtitle: 'Access enrolled courses, lessons, quizzes, assignments, and checkout.',
+    Icon: GraduationCap,
+    className: 'auth-card-student',
+  },
+  {
+    value: 'coach',
+    label: 'Coach',
+    title: 'Coach course studio',
+    subtitle: 'Create courses, manage learning content, students, revenue, and uploads.',
+    Icon: UserCog,
+    className: 'auth-card-coach',
+  },
+  {
+    value: 'superadmin',
+    label: 'Admin',
+    title: 'Admin control panel',
+    subtitle: 'Manage coaches, students, courses, payments, search, and notifications.',
+    Icon: ShieldCheck,
+    className: 'auth-card-admin',
+  },
+]
 
 const Login = () => {
   const { login } = useAuth()
@@ -20,12 +39,18 @@ const Login = () => {
   const location = useLocation()
   const from = location.state?.from?.pathname
 
-  const [form, setForm] = useState({ email: '', password: '' })
+  const [form, setForm] = useState({ email: '', password: '', role: 'student' })
   const [loading, setLoading] = useState(false)
   const [showPass, setShowPass] = useState(false)
 
+  const activeRole = ROLE_OPTIONS.find((role) => role.value === form.role) || ROLE_OPTIONS[0]
+  const ActiveIcon = activeRole.Icon
+
   const handleChange = (e) =>
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }))
+
+  const handleRoleSelect = (role) =>
+    setForm((p) => ({ ...p, role }))
 
   const finishLogin = async (credentials) => {
     const user = await login(credentials)
@@ -52,52 +77,35 @@ const Login = () => {
     }
   }
 
-  const handleDemoLogin = async (account) => {
-    setLoading(true)
-    setForm({ email: account.email, password: account.password })
-
-    try {
-      await finishLogin({ email: account.email, password: account.password })
-    } catch (err) {
-      toast.error(err?.message || 'Demo login failed')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return (
-    <div className="auth-card animate-slideUp">
+    <div className={`auth-card animate-slideUp ${activeRole.className}`}>
       <div className="auth-logo">
         <div className="auth-logo-icon">
-          <ShieldCheck size={25} />
+          <ActiveIcon size={25} />
         </div>
         <span className="auth-logo-text">LearnFlow</span>
       </div>
 
-      <h1 className="auth-title">Welcome back</h1>
-      <p className="auth-subtitle">Sign in to continue your workspace</p>
-
-      <div className="demo-grid" aria-label="Demo accounts">
-        {DEMO_ACCOUNTS.map((account) => {
-          const meta = ROLE_META[account.role]
-          const Icon = meta.Icon
-
-          return (
-            <button
-              key={account.id}
-              type="button"
-              className="demo-button"
-              onClick={() => handleDemoLogin(account)}
-              disabled={loading}
-            >
-              <Icon size={17} />
-              <span>{meta.label}</span>
-            </button>
-          )
-        })}
+      <div className="auth-role-panel">
+        <p className="auth-role-kicker">{activeRole.label} Login</p>
+        <h1 className="auth-title">{activeRole.title}</h1>
+        <p className="auth-subtitle">{activeRole.subtitle}</p>
       </div>
 
-      <div className="auth-divider"><span>or</span></div>
+      <div className="role-selector auth-role-tabs" aria-label="Choose login role">
+        {ROLE_OPTIONS.map(({ value, label, Icon }) => (
+          <button
+            key={value}
+            type="button"
+            className={`role-option auth-role-tab ${form.role === value ? 'selected' : ''}`}
+            onClick={() => handleRoleSelect(value)}
+            aria-pressed={form.role === value}
+          >
+            <span className="role-icon"><Icon size={17} /></span>
+            <span className="role-label">{label}</span>
+          </button>
+        ))}
+      </div>
 
       <form onSubmit={handleSubmit} className="auth-form">
         <div className="form-group">
@@ -156,15 +164,15 @@ const Login = () => {
               Signing in...
             </>
           ) : (
-            'Sign In'
+            `Sign in as ${activeRole.label}`
           )}
         </button>
       </form>
 
       <p className="auth-footer-text">
-        Do not have an account?{' '}
+        Student account needed?{' '}
         <Link to="/register" className="form-link">
-          Create account
+          Create student account
         </Link>
       </p>
     </div>
