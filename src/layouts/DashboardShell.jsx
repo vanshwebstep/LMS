@@ -81,6 +81,37 @@ export default function DashboardShell({
     return () => clearTimeout(timer)
   }, [searchTerm])
 
+  const getSearchTarget = (group, item) => {
+    const role = user?.role
+    if (group === 'courses') {
+      if (role === 'coach') return `/coach/course-detail/${item.id}`
+      if (role === 'student') return `/student/courses/${item.id}`
+      return `/admin/courses/${item.id}`
+    }
+    if (group === 'students') {
+      if (role === 'coach') return '/coach/my-students'
+      return '/admin/students'
+    }
+    if (group === 'coaches') {
+      if (role === 'student') return '/student/courses'
+      return '/admin/coaches'
+    }
+    if (group === 'payments') {
+      if (role === 'coach') return '/coach/earnings'
+      if (role === 'student') return '/student/my-learning'
+      return '/admin/payments'
+    }
+    return null
+  }
+
+  const handleSearchSelect = (group, item) => {
+    const target = getSearchTarget(group, item)
+    if (!target) return
+    setSearchOpen(false)
+    setSearchTerm('')
+    setSearchResults(null)
+    navigate(target)
+  }
   useEffect(() => {
     const onClick = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) setSearchOpen(false)
@@ -153,14 +184,14 @@ export default function DashboardShell({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="border-b border-slate-200/80 bg-white/90 px-5 py-3 backdrop-blur">
+        <header className="relative z-[80] border-b border-slate-200/80 bg-white/90 px-5 py-3 backdrop-blur">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <h1 className="truncate text-lg font-black tracking-tight text-slate-950">{title}</h1>
               <p className="truncate text-xs font-medium text-slate-500">{subtitle}</p>
             </div>
 
-            <div ref={searchRef} className="relative hidden min-w-[280px] max-w-sm flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 lg:flex">
+            <div ref={searchRef} className="relative z-[90] hidden min-w-[280px] max-w-sm flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 lg:flex">
               <Search size={16} />
               <input
                 value={searchTerm}
@@ -173,15 +204,21 @@ export default function DashboardShell({
                 className="min-w-0 flex-1 bg-transparent text-sm outline-none"
               />
               {searchOpen && searchTerm && searchResults && (
-                <div className="absolute left-0 right-0 top-11 z-50 max-h-96 overflow-auto rounded-lg border border-slate-200 bg-white p-2 shadow-xl">
+                <div className="absolute left-0 right-0 top-11 z-[999] max-h-96 overflow-auto rounded-lg border border-slate-200 bg-white p-2 shadow-xl">
                   {['courses', 'students', 'coaches', 'payments'].map((group) => (
                     <div key={group} className="mb-2 last:mb-0">
                       <p className="px-2 py-1 text-[11px] font-black uppercase text-slate-400">{group}</p>
                       {(searchResults[group] || []).slice(0, 5).map((item) => (
-                        <div key={`${group}-${item.id || item.orderId}`} className="rounded-md px-2 py-2 text-xs text-slate-700 hover:bg-slate-50">
+                        <button
+                          key={`${group}-${item.id || item.orderId}`}
+                          type="button"
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => handleSearchSelect(group, item)}
+                          className="block w-full rounded-md px-2 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+                        >
                           <p className="font-bold">{item.title || item.name || item.orderId || item.id}</p>
                           <p className="truncate text-slate-400">{item.email || item.category || item.status || item.description || ''}</p>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   ))}
