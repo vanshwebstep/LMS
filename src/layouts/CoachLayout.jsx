@@ -1,4 +1,4 @@
-﻿import {
+import {
   BookOpen,
   ClipboardList,
   DollarSign,
@@ -11,6 +11,7 @@ import DashboardShell from './DashboardShell'
 const navItems = [
   { path: '/coach/dashboard', label: 'Overview', icon: LayoutDashboard },
   { path: '/coach/my-courses', label: 'My Courses', icon: BookOpen },
+  { path: '/coach/manage-lessons', label: 'Content Builder', icon: BookOpen },
   { path: '/coach/my-students', label: 'Students', icon: Users },
   { path: '/coach/assignments', label: 'Assignments', icon: ClipboardList },
   { path: '/coach/earnings', label: 'Earnings', icon: DollarSign },

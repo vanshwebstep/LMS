@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { PlusCircle, Search, Filter, BookOpen, Users, Edit2, Eye, MoreVertical } from "lucide-react";
 import api from "../../services/api";
 import { formatCurrency } from "../../utils/formatters";
-import { resolveMediaUrl } from "../../utils/media";
+import CourseMedia from "../../components/common/CourseMedia";
 
 const statuses = ["All", "published", "draft", "archived"];
 
@@ -85,13 +85,8 @@ export default function MyCourses() {
           {filtered.map((course) => (
             <div key={course.id} className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
               <div className="h-36 overflow-hidden bg-gradient-to-br from-indigo-100 to-sky-100">
-                {resolveMediaUrl(course.thumbnailUrl) ? (
-                  <img src={resolveMediaUrl(course.thumbnailUrl)} alt={course.title} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-4xl font-black text-indigo-500">
-                    {(course.title || "C").slice(0, 1).toUpperCase()}
-                  </div>
-                )}
+                <CourseMedia course={course} compact />
+
               </div>
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2 mb-2">

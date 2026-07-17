@@ -1,9 +1,10 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, CheckCircle, Clock, PlayCircle, Star, Users } from 'lucide-react'
 import api from '../../services/api'
 import { formatCurrency } from '../../utils/formatters'
-import { resolveMediaUrl } from '../../utils/media'
+import RichTextContent from '../../components/common/RichTextContent'
+import CourseMedia from '../../components/common/CourseMedia'
 
 const CourseDetail = () => {
   const { id } = useParams()
@@ -45,7 +46,7 @@ const CourseDetail = () => {
           <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-indigo-100">{course.category}</span>
           {enrolled && <span className="ml-2 rounded-full bg-green-500 px-3 py-1 text-xs font-black text-white">Already bought</span>}
           <h1 className="mt-4 text-3xl font-extrabold text-white">{course.title}</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">{course.description}</p>
+          <RichTextContent html={course.description} dark className="mt-3 max-w-2xl" />
           <div className="mt-5 flex flex-wrap gap-4 text-sm text-slate-200">
             <span className="flex items-center gap-2"><Users size={16} /> {course.students || 0} students</span>
             <span className="flex items-center gap-2"><Clock size={16} /> {course.difficulty}</span>
@@ -53,7 +54,7 @@ const CourseDetail = () => {
           </div>
         </div>
         <aside className="rounded-lg bg-white p-5 text-slate-900">
-          {resolveMediaUrl(course.thumbnailUrl) && <img src={resolveMediaUrl(course.thumbnailUrl)} alt={course.title} className="mb-4 h-40 w-full rounded-lg object-cover" />}
+          <div className="mb-4 aspect-video overflow-hidden rounded-lg bg-slate-950"><CourseMedia course={course} /></div>
           <p className="text-sm font-semibold text-slate-500">{enrolled ? 'Your access' : 'Lifetime access'}</p>
           <p className={`mt-1 text-3xl font-extrabold ${enrolled ? 'text-green-700' : 'text-slate-900'}`}>{enrolled ? 'Already bought' : formatCurrency(course.price || 0, course.currency || 'INR')}</p>
           {enrolled ? (

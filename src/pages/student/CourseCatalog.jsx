@@ -1,9 +1,9 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BookOpen, CheckCircle, Clock, Star, Users } from 'lucide-react'
 import api from '../../services/api'
 import { formatCurrency } from '../../utils/formatters'
-import { resolveMediaUrl } from '../../utils/media'
+import CourseMedia from '../../components/common/CourseMedia'
 
 const CourseCatalog = () => {
   const [courses, setCourses] = useState([])
@@ -46,11 +46,7 @@ const CourseCatalog = () => {
             return (
               <article key={course.id} className={`overflow-hidden rounded-lg bg-white shadow-sm ring-1 ${enrolled ? 'ring-green-100' : 'ring-transparent'}`}>
                 <div className="relative h-36 overflow-hidden bg-slate-900">
-                  {resolveMediaUrl(course.thumbnailUrl) ? (
-                    <img src={resolveMediaUrl(course.thumbnailUrl)} alt={course.title} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full items-center justify-center px-6 text-center"><h3 className="text-xl font-bold text-white">{course.category}</h3></div>
-                  )}
+                  <CourseMedia course={course} compact />
                   {enrolled && <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-green-600 px-3 py-1 text-xs font-black text-white"><CheckCircle size={13} /> Enrolled</span>}
                 </div>
                 <div className="space-y-4 p-5">

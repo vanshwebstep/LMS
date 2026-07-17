@@ -1,9 +1,10 @@
-﻿import {
+import {
   BarChart3,
   BookOpen,
   CreditCard,
   LayoutDashboard,
   Settings,
+  Tags,
   Users,
 } from 'lucide-react'
 import DashboardShell from './DashboardShell'
@@ -13,6 +14,7 @@ const navItems = [
   { path: '/admin/coaches', label: 'Coaches', icon: Users },
   { path: '/admin/students', label: 'Students', icon: Users },
   { path: '/admin/courses', label: 'Courses', icon: BookOpen },
+  { path: '/admin/master-data', label: 'Master Data', icon: Tags },
   { path: '/admin/payments', label: 'Payments', icon: CreditCard },
   { path: '/admin/reports', label: 'Reports', icon: BarChart3 },
   { path: '/admin/settings', label: 'Settings', icon: Settings },

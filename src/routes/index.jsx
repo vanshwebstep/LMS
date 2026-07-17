@@ -1,4 +1,4 @@
-﻿import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter } from 'react-router-dom'
 import ProtectedRoute from './ProtectedRoute'
 import { ROLES } from '../utils/constants'
 import PlaceholderPage from '../components/common/PlaceholderPage'
@@ -32,6 +32,7 @@ import Certificates from '../pages/student/Certificates'
 import MyLearning from '../pages/student/MyLearning'
 import PlatformSettings from '../pages/superadmin/PlatformSettings'
 import ManagePayments from '../pages/superadmin/ManagePayments'
+import ManageMasterData from '../pages/superadmin/ManageMasterData'
 
 // Coach pages
 import CoachDashboard from '../pages/coach/CoachDashboard'
@@ -87,6 +88,7 @@ const router = createBrowserRouter([
           { path: '/admin/students', element: <ManageStudents /> },
           { path: '/admin/courses', element: <ManageCourses /> },
           { path: '/admin/courses/:id', element: <AdminCourseDetail /> },
+          { path: '/admin/master-data', element: <ManageMasterData /> },
           { path: '/admin/payments', element: <ManagePayments /> },
           { path: '/admin/subscriptions', element: placeholder('Subscriptions') },
           { path: '/admin/reports', element: <Reports /> },
@@ -112,6 +114,7 @@ const router = createBrowserRouter([
           { path: '/coach/manage-topics', element: <ManageTopics /> },
           { path: '/coach/quizzes', element: <ManageQuizzes /> },
           { path: '/coach/create-quiz', element: <CreateQuiz /> },
+          { path: '/coach/quizzes/:quizId/edit', element: <CreateQuiz /> },
           { path: '/coach/assignments', element: <ManageAssignments /> },
           { path: '/coach/upload-materials', element: <UploadMaterials /> },
           { path: '/coach/pricing-plans', element: <PricingPlans /> },
