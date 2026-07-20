@@ -9,6 +9,13 @@ import { getVideoEmbedUrl, isDirectVideoUrl } from "../../utils/video";
 const isSubmitted = (submission) => ["submitted", "graded"].includes(submission?.status);
 const isQuizPassed = (quiz) => Number(quiz.attempts || 0) > 0 && Number(quiz.avgScore || 0) >= Number(quiz.passingScore || 0);
 
+const assignmentStatusLabel = (status) => {
+  if (status === "graded") return "Accepted";
+  if (status === "pending") return "Rejected - needs revision";
+  if (status === "submitted") return "Submitted for review";
+  return "Not submitted";
+};
+
 const getLessonIcon = (type) => {
   if (type === "video") return PlayCircle;
   if (type === "document") return FileText;
@@ -75,7 +82,7 @@ export default function LearnCourse() {
     }
   };
 
-  useEffect(() => { load(""); }, [courseId]);
+  useEffect(() => { const timer = setTimeout(() => load(""), 0); return () => clearTimeout(timer); }, [courseId]);
 
   const markComplete = async (lessonId = activeLesson?.id) => {
     if (!lessonId) return;
@@ -248,7 +255,7 @@ function ActivityPanel({ assignments, quizzes }) {
                 <div key={assignment.id} className="rounded-xl border p-3 hover:bg-slate-50">
                   <Link to={`/student/assignments/${assignment.id}/submit`} className="block">
                     <p className="font-bold text-slate-900">{assignment.title}</p>
-                    <p className="mt-1 text-xs text-slate-500">{submission ? `Status: ${submission.status}` : "Not submitted"}</p>
+                    <p className="mt-1 text-xs text-slate-500">{submission ? assignmentStatusLabel(submission.status) : "Not submitted"}</p>
                   </Link>
                   {fileUrl && (
                     <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">

@@ -6,6 +6,13 @@ import api from "../../services/api";
 import { formatDate } from "../../utils/formatters";
 import { resolveMediaUrl } from "../../utils/media";
 
+const submissionStatusLabel = (status) => {
+  if (status === "graded") return "Accepted";
+  if (status === "pending") return "Rejected - needs revision";
+  if (status === "submitted") return "Submitted for review";
+  return status || "Not submitted";
+};
+
 export default function SubmitAssignment() {
   const { assignmentId } = useParams();
   const navigate = useNavigate();
@@ -76,7 +83,7 @@ export default function SubmitAssignment() {
           </div>
         )}
       </section>
-      {submission && <div className="rounded-xl border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-700">Existing submission status: {submission.status}{submission.score !== null && submission.score !== undefined ? `, score: ${submission.score}` : ""}{submittedFile ? <a href={submittedFile} target="_blank" rel="noreferrer" className="ml-2 font-bold underline">Open submitted file</a> : null}</div>}
+      {submission && <div className="rounded-xl border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-700">Existing submission status: {submissionStatusLabel(submission.status)}{submission.score !== null && submission.score !== undefined ? `, score: ${submission.score}` : ""}{submittedFile ? <a href={submittedFile} target="_blank" rel="noreferrer" className="ml-2 font-bold underline">Open submitted file</a> : null}</div>}
       <div className="space-y-4 rounded-2xl bg-white p-6 shadow-sm">
         <div>
           <label className="mb-1 block text-sm font-semibold text-slate-700">Answer</label>
